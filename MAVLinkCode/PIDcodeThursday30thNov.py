@@ -65,7 +65,7 @@ master.mav.param_set_send(
 
 )
     
-''' 
+
    pitch_error = 0 - C_Pitch  
     print("Pitch error:", pitch_error)
     pid_output = pid(pitch_error)  #assuming simple_pid algorithm knows how to do it for aircrafts and is giving us an elevator 
@@ -131,4 +131,3 @@ while True:
         print(msg)
         time.sleep(60)
 
-'''
