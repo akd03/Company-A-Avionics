@@ -1,3 +1,11 @@
+'''
+Created by Gabriel Gekonge on 31/01/2024
+
+This is data stream between Cube and Teensy using respective serial libraries
+
+An alternative to this is mavlink implementation which is currently in development as of 01/02/2024
+
+'''
 
 while True:
 
