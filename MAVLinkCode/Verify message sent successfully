@@ -1,0 +1,58 @@
+#include <MAVLink.h>
+
+// Function to send a MAVLink message
+void send_AngleData_as_MAVLinkMessage(mavlink_channel_t channel, float angledata) {
+    mavlink_message_t msg;
+    mavlink_msg_named_value_float_pack(0, 200, &msg, millis(), "AngleData", angledata);
+
+    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+    // Send the MAVLink message over the serial port (Serial5 on Teensy)
+    Serial5.write(buf, len);
+}
+
+void setup() {
+    Serial5.begin(57600);  // Set the baud rate to match your configuration
+    pinMode(LED_BUILTIN, OUTPUT);  // Use the built-in LED as an indicator
+}
+
+void loop() {
+    float angledata = 42.0;  // Example angle data
+    send_AngleData_as_MAVLinkMessage(MAVLINK_COMM_1, angledata);
+
+    // Wait for a short period for a response
+    unsigned long startTime = millis();
+    bool responseReceived = false;
+
+    while (millis() - startTime < 2000) {  // 2-second window to receive a response
+        if (Serial5.available()) {
+            mavlink_message_t msg;
+            mavlink_status_t status;
+
+            while (Serial5.available()) {
+                uint8_t byte = Serial5.read();
+                if (mavlink_parse_char(MAVLINK_COMM_0, byte, &msg, &status)) {
+                    // Here, you need to replace MAVLINK_MSG_ID_HEARTBEAT with the actual message ID you expect as a response
+                    if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+                        responseReceived = true;
+                        digitalWrite(LED_BUILTIN, HIGH);  // Turn on the LED to indicate a response was received
+                        delay(100);  // Keep the LED on for a short period
+                        digitalWrite(LED_BUILTIN, LOW);
+                        break;
+                    }
+                }
+            }
+            if (responseReceived) {
+                break;  // Exit the loop if a response is received
+            }
+        }
+    }
+
+    if (!responseReceived) {
+        // No response received within the expected time frame
+        // Implement your error handling or retry logic here
+    }
+
+    delay(1000);  // Main loop delay
+}
