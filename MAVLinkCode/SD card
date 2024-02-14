@@ -1,0 +1,21 @@
+from pymavlink import mavutil
+def log_all_commands (master, target_system=1, target_component=0):
+    
+    master.mav.command.long_send(
+        target_component, target_system,
+        mavutil.mavlink.MAV_CMD_LOGGING_START,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        
+    )
+    
+connection_string = 'tcp:127.0.0.1:5763'
+master = mavutil.mavlink_connection(connection_string)
+
+log_all_commands(master)
