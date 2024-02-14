@@ -18,10 +18,9 @@ void setup() {
 }
 
 void loop() {
-    float angledata = 42.0;  // Example angle data
+    float angledata = AnglePitch
     send_AngleData_as_MAVLinkMessage(MAVLINK_COMM_1, angledata);
 
-    // Wait for a short period for a response
     unsigned long startTime = millis();
     bool responseReceived = false;
 
@@ -32,12 +31,11 @@ void loop() {
 
             while (Serial5.available()) {
                 uint8_t byte = Serial5.read();
-                if (mavlink_parse_char(MAVLINK_COMM_0, byte, &msg, &status)) {
-                    // Here, you need to replace MAVLINK_MSG_ID_HEARTBEAT with the actual message ID you expect as a response
-                    if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+                if (mavlink_parse_char(MAVLINK_COMM_1, byte, &msg, &status)) {
+                    if (msg.msgid == MAVLINK_MSG_ID_251) {
                         responseReceived = true;
-                        digitalWrite(LED_BUILTIN, HIGH);  // Turn on the LED to indicate a response was received
-                        delay(100);  // Keep the LED on for a short period
+                        digitalWrite(LED_BUILTIN, HIGH);  
+                        delay(100); 
                         digitalWrite(LED_BUILTIN, LOW);
                         break;
                     }
