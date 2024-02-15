@@ -72,6 +72,6 @@ void loop() {
   //Send the message via Serial.
 
   Serial.write(buf, len);
-  delay(50);
+  delay(100);
 
 }
