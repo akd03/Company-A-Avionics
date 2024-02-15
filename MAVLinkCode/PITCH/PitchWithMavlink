@@ -1,0 +1,77 @@
+#include <MAVLink.h>
+#include <Wire.h>
+
+void setup() {
+
+  Serial.begin(9600);
+  Serial.begin(57600);
+  pinMode(13, OUTPUT);
+  digitalWrite(13, HIGH);
+
+  Wire.begin();
+  Wire.setClock(400000);
+  Wire.begin();
+
+  //delay(250); // don't touch this.
+
+  Wire.beginTransmission(0x68);
+  Wire.write(0x6B);
+  Wire.write(0x00);
+  Wire.endTransmission(true);
+
+  //Print initial value (optional tho)
+
+  Serial.print(0);
+  Serial.print(" "); //space
+  Serial.println(0);
+}
+
+float AnglePitch1 = 0;  //This is for Gyroscope.
+float AccX, AccY, AccZ; //Accelerometer values, I put some redundant axis in case the sensor orientation has to be changed.
+float rad_to_deg = 180 / 3.141592654;
+
+bool systemIsStationary() {
+
+  return abs(AnglePitch1) <= 0.5 && abs(AnglePitch3) <= 0.5;
+
+} //precision to 0.5 degrees, also determining if the UAV is stable
+
+void gyro_signals(void) {
+
+  Wire.beginTransmission(0x68);
+  Wire.write(0x3B); //Reading from the Accelerometer data registers
+  Wire.endTransmission(false);
+  Wire.requestFrom(0x68, 6, true);
+
+  int16_t AccXLSB = Wire.read() << 8 | Wire.read();  
+  int16_t AccYLSB = Wire.read() << 8 | Wire.read();  
+  int16_t AccZLSB = Wire.read() << 8 | Wire.read();
+
+  AccX = (float)AccXLSB / 16384.0;  //Raw sensor values, divide it by some constant( in this case 16384 which is the full sensitivity), to normalise the values (sort of like filtering and stuffs)
+  AccY = (float)AccYLSB / 16384.0;
+  AccZ = (float)AccZLSB / 16384.0;
+
+  AnglePitch1 = -atan(AccY / sqrt(AccX * AccX + AccZ * AccZ)) * (180 / 3.141592);  //This method is converting the Acceleration vectors and calculate the vector angles (offset from 0point), mathematically AND practically very accurate
+}
+
+void loop() {
+
+  gyro_signals();
+
+  float elevator_angle = AnglePitch1;
+
+  mavlink_message_t msg;
+
+  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+  //Packing NAMED_VALUE_FLOAT message
+
+  mavlink_msg_named_value_float_pack(0, 200, &msg, millis(), "ElevatorAngle", elevator_angle);
+  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+  //Send the message via Serial.
+
+  Serial.write(buf, len);
+  delay(50);
+
+}
