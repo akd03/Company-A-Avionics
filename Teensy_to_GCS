@@ -1,0 +1,36 @@
+
+/*
+
+This piece of code takes the elevator angle data measured by MPU6050, packs it into mavlink messages 
+and sends them over from the Teensy to the GCS via a serial USB connection.
+
+
+*/
+
+
+#include <MAVLink.h>
+
+void setup() {
+  
+  Serial.begin(57600);
+}
+
+
+void loop() {
+  
+  float elevator_angle = AnglePitch3;
+
+  mavlink_message_t msg;
+  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+  // Pack the NAMED_VALUE_FLOAT message
+  mavlink_msg_named_value_float_pack(0, 200, &msg, millis(), "Elevator_Angle", elevator_angle);
+  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+  // Send the message via Serial
+  Serial.write(buf, len);
+
+  delay(50); // Change as required to modify speed of datastream
+
+}
+
