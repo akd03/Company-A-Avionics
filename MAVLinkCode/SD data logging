@@ -1,0 +1,42 @@
+from pymavlink import mavutil
+import time
+
+def log_all_commands(master, target_system=1, target_component=0, param1=0, param2=0, param3=0, param4=0, param5=0, param6=0, param7=0):
+    try:
+        # Send command to start logging
+        master.mav.command_long_send(
+            target_system, target_component,
+            mavutil.mavlink.MAV_CMD_LOGGING_START,
+            0,  # Confirmation
+            param1, param2, param3, param4, param5, param6, param7  # Parameters 1-7
+        )
+
+        # Wait for acknowledgment
+        ack_received = False
+        start_time = time.time()
+        while not ack_received and time.time() - start_time < 5:  # 5-second timeout
+            msg = master.recv_match(type='COMMAND_ACK', blocking=True, timeout=5)
+            if msg:
+                if msg.command == mavutil.mavlink.MAV_CMD_LOGGING_START and msg.result == mavutil.mavlink.MAV_RESULT_ACCEPTED:
+                    print("Logging start command acknowledged.")
+                    ack_received = True
+                else:
+                    print(f"Command not accepted, result: {msg.result}")
+                    break
+            else:
+                print("No acknowledgment received.")
+                break
+
+        if not ack_received:
+            print("Failed to receive acknowledgment within timeout period.")
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+connection_string = 'tcp:127.0.0.1:5763'
+try:
+    master = mavutil.mavlink_connection(connection_string)
+    # Example usage with parameters. Replace these with your actual parameter values.
+    log_all_commands(master, param1=0, param2=1, param3=2, param4=3, param5=4, param6=5, param7=6)
+except Exception as e:
+    print(f"Failed to connect or send command: {str(e)}")
